@@ -1,0 +1,65 @@
+# Kind cluster configuration for OpenRAN lab - WSL2 optimized
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: openran
+
+# Single node cluster for laptop deployment
+nodes:
+- role: control-plane
+  # Use K8s 1.29 which has better WSL2 compatibility
+  image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+  
+  extraPortMappings:
+  - containerPort: 30000
+    hostPort: 3000
+    protocol: TCP
+    # Grafana dashboard access
+  - containerPort: 30001  
+    hostPort: 9090
+    protocol: TCP
+    # Prometheus access
+  - containerPort: 30002
+    hostPort: 8080
+    protocol: TCP
+    # xApp API access
+  
+  # WSL2-friendly kubelet configuration
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        # Disable swap check since WSL2 has swap enabled
+        fail-swap-on: "false"
+        # Use systemd driver to match container runtime expectations
+        cgroup-driver: "systemd"
+        # Increase timeouts for slower WSL2 startup
+        node-status-update-frequency: "20s"
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+      extraArgs:
+        # Increase timeouts for WSL2
+        default-watch-cache-size: "100"
+    controllerManager:
+      extraArgs:
+        # Increase grace periods for WSL2
+        node-monitor-period: "10s"
+        node-monitor-grace-period: "60s"
+  - |
+    kind: KubeletConfiguration
+    # Kubelet settings optimized for WSL2
+    cgroupDriver: systemd
+    failSwapOn: false
+    nodeStatusUpdateFrequency: "20s"
+    protectKernelDefaults: false
+    maxPods: 110
+
+# Network configuration
+networking:
+  # Use default CNI (kindnet) which is more reliable
+  disableDefaultCNI: false
+  # Pod subnet
+  podSubnet: "10.244.0.0/16"
+  # Service subnet  
+  serviceSubnet: "10.96.0.0/12"
