@@ -1,0 +1,112 @@
+[tool.poetry]
+name = "mini-openran-lab"
+version = "0.1.0"
+description = "A zero-cost, laptop-only mini-OpenRAN lab demonstrating 4G/5G cell-site with O-RAN RIC, xApps, and modern DevOps"
+authors = ["OpenRAN Lab Contributors <contributors@openran-lab.org>"]
+readme = "README.md"
+license = "MIT"
+packages = [
+    { include = "xapps" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+# FastAPI and web framework dependencies
+fastapi = "^0.100.0"
+uvicorn = {extras = ["standard"], version = "^0.20.0"}
+aiohttp = "^3.8.0"
+prometheus-client = "^0.16.0"
+pydantic = "^2.0.0"
+python-multipart = "^0.0.6"
+
+# Future ML dependencies (optional)
+scikit-learn = {version = "^1.3.0", optional = true}
+numpy = {version = "^1.24.0", optional = true}
+pandas = {version = "^2.0.0", optional = true}
+matplotlib = {version = "^3.7.0", optional = true}
+
+[tool.poetry.group.dev.dependencies]
+# Testing dependencies
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+httpx = "^0.24.0"
+robotframework = "^6.0.0"
+robotframework-requests = "^0.9.0"
+
+# Code quality and formatting
+black = "^23.0.0"
+flake8 = "^6.0.0"
+mypy = "^1.0.0"
+isort = "^5.12.0"
+
+# YAML processing for Kubernetes configs
+pyyaml = "^6.0.0"
+
+[tool.poetry.extras]
+ml = ["scikit-learn", "numpy", "pandas", "matplotlib"]
+
+[tool.poetry.scripts]
+beam-tuner = "xapps.beam_tuner.app:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --tb=short"
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    ".",
+    "xapps",
+]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    ".pytest_cache",
+    ".mypy_cache",
+]
