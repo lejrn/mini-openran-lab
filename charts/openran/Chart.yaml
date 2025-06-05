@@ -1,0 +1,31 @@
+apiVersion: v2
+name: openran
+description: A Helm chart for Mini-OpenRAN Lab - Complete 4G/5G testbed with RIC and xApps
+type: application
+version: 0.1.0
+appVersion: "1.0"
+
+keywords:
+  - openran
+  - 5g
+  - ric
+  - telecom
+  - srsran
+
+maintainers:
+  - name: Mini-OpenRAN Lab Team
+    email: team@mini-openran-lab.io
+
+dependencies:
+  - name: prometheus
+    version: "25.8.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: prometheus.enabled
+  - name: grafana
+    version: "7.0.0"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: grafana.enabled
+
+annotations:
+  category: Telecommunications
+  licenses: Apache-2.0
