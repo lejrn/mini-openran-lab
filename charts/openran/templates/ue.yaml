@@ -77,7 +77,7 @@ spec:
         command: 
         - 'sh'
         - '-c'
-        - 'until nc -z {{ include "openran.fullname" . }}-gnb 2000; do echo "Waiting for gNB..."; sleep 5; done; echo "gNB is ready"'
+        - 'until nc -z {{ include "openran.fullname" . }}-gnb 9091; do echo "Waiting for gNB metrics endpoint..."; sleep 5; done; echo "gNB is ready"'
 ---
 apiVersion: v1
 kind: Service
