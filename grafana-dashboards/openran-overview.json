@@ -1,0 +1,351 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "OpenRAN Overview Dashboard",
+    "tags": ["openran", "radio", "5g"],
+    "style": "dark",
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    },
+    "refresh": "10s",
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "gNB Connected UEs",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "gnb_connected_ues_total",
+            "legendFormat": "Connected UEs",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "green", "value": 2}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Active Bearers",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "gnb_active_bearers_total",
+            "legendFormat": "Active Bearers",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "green", "value": 2}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "UE Connection Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "ue_connection_state",
+            "legendFormat": "Connection State",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "mappings": [
+              {"options": {"0": {"text": "Disconnected"}}, "type": "value"},
+              {"options": {"1": {"text": "Connected"}}, "type": "value"}
+            ],
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "UE Signal Strength",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "ue_signal_strength_dbm",
+            "legendFormat": "Signal Strength",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": -100},
+                {"color": "yellow", "value": -80},
+                {"color": "green", "value": -60}
+              ]
+            },
+            "min": -120,
+            "max": -40,
+            "unit": "dBm"
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 5,
+        "title": "Downlink Throughput",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "gnb_dl_throughput_mbps",
+            "legendFormat": "gNB DL Throughput",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "unit": "Mbps"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 6,
+        "title": "Uplink Throughput",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "gnb_ul_throughput_mbps",
+            "legendFormat": "gNB UL Throughput",
+            "refId": "A"
+          },
+          {
+            "expr": "ue_data_throughput_mbps",
+            "legendFormat": "UE Data Throughput",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "unit": "Mbps"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 7,
+        "title": "Resource Utilization",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "gnb_cpu_usage_percent",
+            "legendFormat": "gNB CPU Usage",
+            "refId": "A"
+          },
+          {
+            "expr": "gnb_memory_usage_percent",
+            "legendFormat": "gNB Memory Usage",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "max": 100,
+            "min": 0,
+            "unit": "percent"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 8,
+        "title": "UE Status Information",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "ue_uptime_seconds",
+            "legendFormat": "Uptime (seconds)",
+            "refId": "A",
+            "format": "table",
+            "instant": true
+          },
+          {
+            "expr": "ue_battery_level_percent",
+            "legendFormat": "Battery Level (%)",
+            "refId": "B",
+            "format": "table",
+            "instant": true
+          },
+          {
+            "expr": "ue_signal_strength_dbm",
+            "legendFormat": "Signal Strength (dBm)",
+            "refId": "C",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "merge",
+            "options": {}
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true,
+                "job": true,
+                "instance": true
+              },
+              "indexByName": {},
+              "renameByName": {
+                "Value #A": "Uptime (sec)",
+                "Value #B": "Battery (%)",
+                "Value #C": "Signal (dBm)"
+              }
+            }
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      }
+    ]
+  }
+}

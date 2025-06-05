@@ -114,9 +114,8 @@ prometheus:
 # Grafana dashboards
 grafana:
   enabled: true
-  admin:
-    user: admin
-    password: admin
+  adminUser: admin
+  adminPassword: admin
   resources:
     requests:
       cpu: "200m"
@@ -132,7 +131,7 @@ grafana:
       datasources:
         - name: Prometheus
           type: prometheus
-          url: http://prometheus-server:80
+          url: http://openran-radio-prometheus-server:80
           access: proxy
           isDefault: true
 
