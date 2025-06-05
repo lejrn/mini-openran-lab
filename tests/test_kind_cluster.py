@@ -261,7 +261,7 @@ class TestKindCluster:
     def test_required_namespaces_exist(self, cluster_name):
         """Test that required namespaces are created."""
         print(f"\n🏷️  Checking required namespaces in cluster '{cluster_name}'...")
-        expected_namespaces = ["openran", "monitoring", "xapps"]
+        expected_namespaces = ["openran-radio", "openran-monitoring", "openran-xapps"]
         
         print("📋 Getting all namespaces...")
         result = subprocess.run(

@@ -2,7 +2,11 @@
 
 [![CI](https://github.com/username/mini-openran-lab/workflows/CI/badge.svg)](https://github.com/username/mini-openran-lab/actions)
 
-**A zero-cost, laptop-only "mini-OpenRAN lab" that demonstrates a full 4G/5G cell-site with O-RAN RIC, xApps, and modern DevOps—all inside WSL 2.**
+**A zero-cost, laptop-only "mini-OpenRAN lab" that demonstrates a full 4G/5G cell-site with O-RAN RIC, xApps,| **2. Radio pods** | Helm template for srsran-gnb | ✅ |
+| | Helm template for srsran-ue | ✅ |
+| | PyTest: log contains "RRC CONNECTED" | ✅ |
+| | Namespace separation implementation | ✅ |
+| | Security audit and documentation | ✅ |d modern DevOps—all inside WSL 2.**
 
 ## 🚀 Quick Start (WSL 2)
 
@@ -37,6 +41,202 @@ kubectl port-forward svc/grafana 3000:3000 -n monitoring
 poetry run pytest -q && robot robot/e2e.robot
 ```
 
+## 📚 Understanding the Stack
+
+### 🎯 **What We're Building**
+
+We're implementing **Phase 2 (Radio Pods)** of the Mini-OpenRAN Lab project, creating a **complete cellular network simulation** that includes:
+
+- **Radio Access Network (RAN)**: gNB + UE communicating via software radio
+- **Intelligence Layer**: RIC + xApps making smart decisions
+- **Observability Stack**: Prometheus + Grafana showing what's happening
+- **DevOps Pipeline**: Everything packaged with Helm, tested with PyTest
+
+This teaches you both **telecom engineering** (4G/5G protocols) and **modern DevOps** (Kubernetes, monitoring, CI/CD) - a powerful combination!
+
+### 📦 **What is a "Chart" (Helm Chart)**
+
+A **Helm Chart** is like a "recipe" or "template" for deploying applications to Kubernetes. Think of it as:
+
+- **Template Package**: Contains YAML templates that describe how to deploy your app
+- **Configurable**: Uses variables (values) so you can customize deployments
+- **Reusable**: Can deploy the same app multiple times with different settings
+- **Versioned**: Like a software package with version numbers
+
+In your case, the `charts/openran/` directory contains templates for:
+- **gNB** (base station)
+- **UE** (user equipment/phone simulator)  
+- **RIC** (radio intelligence controller)
+- **Monitoring stack** (Prometheus + Grafana)
+
+### ⚙️ **What is Helm**
+
+**Helm** is the "package manager for Kubernetes" - like `apt` for Ubuntu or `brew` for macOS, but for Kubernetes applications.
+
+```bash
+# Helm commands you'll use:
+helm install openran ./charts/openran    # Deploy the whole lab
+helm upgrade openran ./charts/openran    # Update deployment
+helm uninstall openran                   # Remove everything
+```
+
+Helm takes your templates + values and generates the actual Kubernetes YAML files.
+
+### 📊 **What is Prometheus**
+
+**Prometheus** is a **metrics collection and storage system**. It:
+
+- **Scrapes metrics**: Pulls data from `/metrics` endpoints every few seconds
+- **Stores time-series data**: Keeps track of values over time
+- **Provides alerts**: Can notify when things go wrong
+- **Query language (PromQL)**: Search and analyze metrics
+
+In your lab, Prometheus collects:
+- **Radio metrics**: Signal quality (CQI), throughput, error rates
+- **System metrics**: CPU, memory usage of pods
+- **Custom metrics**: From your xApp and RIC
+
+### 📈 **What is Grafana**
+
+**Grafana** is a **visualization and dashboarding tool**. It:
+
+- **Connects to Prometheus**: Reads the metrics data
+- **Creates beautiful dashboards**: Graphs, charts, alerts
+- **Real-time monitoring**: Watch your 4G/5G network in action
+- **Accessible via web**: `http://localhost:3000` (admin/admin)
+
+In your lab, Grafana will show:
+- **Signal Quality**: How good the radio connection is
+- **Throughput**: Data transfer rates
+- **RRC Connections**: When UE connects to gNB
+- **xApp Actions**: When AI makes network optimizations
+
+### 🔄 **How They Work Together**
+
+```
+┌─────────┐    metrics    ┌─────────────┐    queries    ┌─────────┐
+│ srsRAN  │ ──────────────> │ Prometheus  │ ─────────────> │ Grafana │
+│ (gNB/UE)│               │ (storage)   │               │ (charts)│
+└─────────┘               └─────────────┘               └─────────┘
+```
+
+1. **srsRAN pods** expose metrics on `:9092/metrics`
+2. **Prometheus** scrapes these metrics every 15 seconds
+3. **Grafana** queries Prometheus and shows live charts
+4. **You** watch the dashboard to see your 4G/5G network working!
+
+### 🎪 **Nested Containerization: Docker in Kubernetes in Docker**
+
+Yes, Docker and Kubernetes can definitely be nested! You're actually **already doing this** in your Mini-OpenRAN Lab:
+
+```
+┌─────────────────── Your Laptop ───────────────────┐
+│  ┌─────────────── Docker Engine ─────────────────┐ │
+│  │  ┌─────────── kind Container ─────────────────┐ │ │
+│  │  │        Kubernetes Cluster                 │ │ │
+│  │  │  ┌─────────┐  ┌─────────┐  ┌─────────┐   │ │ │
+│  │  │  │srsran-  │  │srsran-  │  │prometheus│   │ │ │
+│  │  │  │gnb      │  │ue       │  │         │   │ │ │
+│  │  │  │(container)  │(container)  │(container)   │ │ │
+│  │  │  └─────────┘  └─────────┘  └─────────┘   │ │ │
+│  │  └─────────────────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────┘
+```
+
+**What's happening:**
+1. **Docker Engine** runs on your laptop
+2. **kind** creates a Docker container that runs Kubernetes
+3. **Kubernetes** runs your application containers inside that container
+4. This gives you a full cluster experience on a single machine!
+
+### 🖥️ **Kubernetes Cluster vs Regular PC**
+
+| Aspect | **Regular PC** | **Kubernetes Cluster** |
+|--------|----------------|-------------------------|
+| **Scale** | 1 machine | Many machines (or 1 machine pretending to be many) |
+| **Process Communication** | Localhost, pipes, shared memory | Network calls, services, DNS |
+| **Failure Handling** | Process crashes = manual restart | Pod crashes = automatic restart |
+| **Resource Sharing** | Shared CPU/RAM | Isolated CPU/RAM per container |
+| **Networking** | `127.0.0.1:port` | `service-name:port` |
+| **Process Management** | `systemd`, `ps`, `kill` | `kubectl`, deployments, pods |
+
+### 🏠 **Regular PC Example**
+```bash
+# On your laptop:
+firefox &                 # Process 1234
+code &                    # Process 1235
+python app.py &           # Process 1236
+
+# They communicate via:
+curl http://localhost:8080      # Same machine
+```
+
+### ☁️ **Kubernetes Example**
+```bash
+# In the cluster:
+kubectl get pods
+# NAME                         READY   STATUS    RESTARTS
+# openran-gnb-12345           1/1     Running   0
+# openran-ue-67890            1/1     Running   0
+# prometheus-11111            1/1     Running   0
+
+# They communicate via:
+# UE -> gNB:     http://openran-gnb:2000
+# Prometheus -> UE: http://openran-ue:9092
+```
+
+### 🧠 **Why Use Kubernetes Instead of Just Running Processes?**
+
+**1. Self-Healing**
+```bash
+# Regular PC:
+kill 1234        # Firefox dies, stays dead
+
+# Kubernetes:
+kubectl delete pod openran-gnb-12345
+# Kubernetes immediately starts openran-gnb-67891
+```
+
+**2. Scaling**
+```bash
+# Regular PC:
+# Hard to run 10 copies of same app
+
+# Kubernetes:
+kubectl scale deployment openran-ue --replicas=10
+# Now you have 10 UE simulators!
+```
+
+**3. Resource Isolation**
+```yaml
+# Each container gets guaranteed resources:
+resources:
+  requests:
+    memory: "512Mi"    # Guaranteed 512MB RAM
+    cpu: "500m"        # Guaranteed 0.5 CPU cores
+  limits:
+    memory: "1Gi"      # Max 1GB RAM
+    cpu: "1000m"       # Max 1 CPU core
+```
+
+### 🔗 **Communication Example from Your UE Template**
+
+```yaml
+# UE waits for gNB to be ready:
+initContainers:
+- name: wait-for-gnb
+  command: ['sh', '-c', 'until nc -z openran-gnb 2000; do sleep 5; done']
+  # Uses Kubernetes DNS: "openran-gnb" resolves to gNB pod IP
+
+# UE connects to gNB:
+env:
+- name: GNB_ADDRESS
+  value: "openran-gnb"  # Service name, not IP address!
+```
+
+**Summary**: Kubernetes is like a **"distributed operating system"** that makes many computers look like one big computer, with automatic networking, healing, and scaling!
+
 ## 🔬 Science & Technology Background
 
 | Domain | Key Idea | Implementation |
@@ -68,9 +268,11 @@ mini-openran-lab/
 | | Add CI badge in README | ✅ |
 | **1. kind cluster** | hack/kind-up.sh script | ✅ |
 | | CI job runs kind create cluster | ✅ |
-| **2. Radio pods** | Helm template for srsran-gnb | ◻ |
-| | Helm template for srsran-ue | ◻ |
-| | PyTest: log contains "RRC CONNECTED" | ◻ |
+| **2. Radio pods** | Helm template for srsran-gnb | ✅ |
+| | Helm template for srsran-ue | ✅ |
+| | PyTest: log contains "RRC CONNECTED" | ✅ |
+| | Namespace separation implementation | ✅ |
+| | Security audit and documentation | ✅ |
 | **3. RIC** | Add RIC chart dependency | ◻ |
 | | Verify E2 link (grep log) | ◻ |
 | | Update architecture diagram | ◻ |
@@ -148,6 +350,76 @@ mini-openran-lab/
 | **RIC** | O-RAN SC "RIC-in-Docker" | 20+ microservices, Kafka, multus CNI |
 | **Infrastructure** | kind on WSL (zero cost) | Multi-node K8s (EKS/GKE) with load balancers |
 | **Debug** | docker logs + localhost Grafana | Remote RF logs, interference, hardware failures |
+
+## 🔒 Network Security & Isolation
+
+**Your Mini-OpenRAN Lab is completely isolated and secure** - no external threats can reach your virtual radio network.
+
+### 🛡️ **3-Layer Security Model**
+
+```
+┌──────────── Internet ─────────────┐
+│                                   │ ❌ No Direct Access
+│  ┌─────── Your Laptop ──────────┐ │
+│  │                              │ │
+│  │  ┌─── Docker Bridge ───────┐ │ │ 🔒 Private Network
+│  │  │   kind cluster          │ │ │    (Bridge + NAT)
+│  │  │                         │ │ │
+│  │  │  ┌─ Pod Network ─────┐  │ │ │ 🔒 Internal Only
+│  │  │  │  srsRAN gNB      │  │ │ │    (Pod-to-Pod)
+│  │  │  │  srsRAN UE       │  │ │ │
+│  │  │  │  Prometheus      │  │ │ │
+│  │  │  └──────────────────┘  │ │ │
+│  │  └─────────────────────────┘ │ │
+│  └──────────────────────────────┘ │
+└───────────────────────────────────┘
+```
+
+### 📡 **Network Architecture**
+
+| Network Layer | IP Range | Access Level | Purpose |
+|---------------|----------|--------------|---------|
+| **Pod Network** | `10.244.0.0/16` | Internal only | srsRAN gNB ↔ UE communication |
+| **Service Network** | `10.96.0.0/12` | Cluster internal | Service discovery (DNS names) |
+| **Docker Bridge** | `172.18.0.0/16` | Host + containers | kind cluster networking |
+| **Localhost Only** | `127.0.0.1:3000,9090,8080` | Your machine | Dashboard access |
+
+### 🚫 **What's NOT Exposed**
+- ❌ **Radio interfaces**: Virtual RF between gNB/UE stays internal
+- ❌ **Pod IPs**: No external routing to individual containers  
+- ❌ **Management APIs**: Kubernetes API server not externally accessible
+- ❌ **Internal metrics**: Prometheus endpoints only reachable within cluster
+
+### ✅ **What IS Accessible** 
+- ✅ **Grafana Dashboard**: `http://localhost:3000` (localhost-only binding)
+- ✅ **Prometheus UI**: `http://localhost:9090` (localhost-only binding)  
+- ✅ **xApp API**: `http://localhost:8080` (localhost-only binding)
+
+### 🔐 **Security Features**
+- **Docker Bridge Isolation**: Private subnet with NAT-only internet access
+- **Kubernetes Network Policies**: Can add pod-to-pod restrictions (currently open for lab use)
+- **No External LoadBalancer**: All services use internal ClusterIP or localhost NodePort
+- **WSL2 Additional Isolation**: Even more network isolation through Windows Subsystem for Linux
+
+### 🔒 **Enhanced Security Options**
+
+The current configuration uses localhost-only bindings for security. If you need to access 
+dashboards from other machines on your network, you can:
+
+```yaml
+# In hack/kind-config.yaml, change from:
+listenAddress: 127.0.0.1  # Localhost only (current)
+# To:
+# listenAddress: 0.0.0.0   # All interfaces (less secure)
+```
+
+Or use `kubectl port-forward` for temporary external access:
+```bash
+# Temporary access from any interface
+kubectl port-forward --address 0.0.0.0 svc/grafana 3000:3000 &
+```
+
+**Bottom Line**: Your virtual cellular network is completely secure and isolated. Dashboard ports are bound to localhost-only, and pod-to-pod radio communications remain completely internal.
 
 ## ☁️ AWS Free Tier Deployment (Optional)
 
