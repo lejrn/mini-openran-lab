@@ -1,0 +1,161 @@
+{{- if .Values.srsran.gnb.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openran.fullname" . }}-gnb
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gnb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "openran.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: gnb
+  template:
+    metadata:
+      labels:
+        {{- include "openran.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: gnb
+        app: srsran-gnb
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: gnb
+        image: "{{- if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{- end }}{{ .Values.srsran.gnb.image.repository }}:{{ .Values.srsran.gnb.image.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - containerPort: 9091
+          name: metrics
+          protocol: TCP
+        - containerPort: 2000
+          name: zmq-tx
+          protocol: TCP
+        - containerPort: 2001
+          name: zmq-rx
+          protocol: TCP
+        env:
+        - name: RF_DRIVER
+          value: {{ .Values.srsran.gnb.config.rf_driver | quote }}
+        - name: DEVICE_ARGS
+          value: {{ .Values.srsran.gnb.config.device_args | quote }}
+        - name: MCS
+          value: {{ .Values.srsran.gnb.config.mcs | quote }}
+        - name: CHANNEL_BW_MHZ
+          value: {{ .Values.srsran.gnb.config.channel_bandwidth_mhz | quote }}
+        - name: PROMETHEUS_PORT
+          value: "9091"
+        resources:
+          {{- toYaml .Values.srsran.gnb.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9091
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9091
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        volumeMounts:
+        - name: gnb-config
+          mountPath: /etc/srsran
+        - name: logs
+          mountPath: /var/log/srsran
+      volumes:
+      - name: gnb-config
+        configMap:
+          name: {{ include "openran.fullname" . }}-gnb-config
+      - name: logs
+        emptyDir: {}
+      # CPU pinning for real-time performance (commented for now)
+      # nodeSelector:
+      #   node-role.kubernetes.io/worker: "true"
+      # tolerations:
+      # - key: "dedicated"
+      #   operator: "Equal"
+      #   value: "srsran"
+      #   effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "openran.fullname" . }}-gnb
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gnb
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9091
+    targetPort: metrics
+    protocol: TCP
+    name: metrics
+  - port: 2000
+    targetPort: zmq-tx
+    protocol: TCP
+    name: zmq-tx
+  - port: 2001
+    targetPort: zmq-rx
+    protocol: TCP
+    name: zmq-rx
+  selector:
+    {{- include "openran.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: gnb
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openran.fullname" . }}-gnb-config
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gnb
+data:
+  gnb.yml: |
+    # srsRAN gNodeB configuration for OpenRAN lab
+    gnb:
+      gnb_id: 1
+      gnb_id_length: 22
+      gnb_name: "OpenRAN-Lab-gNB"
+      
+    amf:
+      addr: 127.0.0.1
+      port: 38412
+      
+    ru_sdr:
+      device_driver: {{ .Values.srsran.gnb.config.rf_driver }}
+      device_args: {{ .Values.srsran.gnb.config.device_args }}
+      srate: 23.04e6
+      tx_gain: 50
+      rx_gain: 40
+      
+    cell_cfg:
+      dl_arfcn: 368500  # 3.5 GHz band
+      band: 78
+      channel_bandwidth_mhz: {{ .Values.srsran.gnb.config.channel_bandwidth_mhz }}
+      common_scs: 30
+      
+    scheduler:
+      policy: "time_rr"  # Round-robin scheduler
+      
+    # E2 interface for RIC integration
+    e2:
+      enable_du_e2: true
+      addr: 127.0.0.1
+      port: 36421
+      
+    # Metrics and logging
+    metrics:
+      enable: true
+      addr: 0.0.0.0
+      port: 9091
+      
+    log:
+      level: info
+      hex_max_size: 64
+{{- end }}

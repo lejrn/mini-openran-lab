@@ -1,0 +1,159 @@
+{{- if .Values.srsran.ue.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openran.fullname" . }}-ue
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "openran.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ue
+  template:
+    metadata:
+      labels:
+        {{- include "openran.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ue
+        app: srsran-ue
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9092"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: ue
+        image: "{{- if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{- end }}{{ .Values.srsran.ue.image.repository }}:{{ .Values.srsran.ue.image.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - containerPort: 9092
+          name: metrics
+          protocol: TCP
+        env:
+        - name: RF_DRIVER
+          value: {{ .Values.srsran.ue.config.rf_driver | quote }}
+        - name: DEVICE_ARGS
+          value: {{ .Values.srsran.ue.config.device_args | quote }}
+        - name: GNB_ADDRESS
+          value: "{{ include "openran.fullname" . }}-gnb"
+        - name: PROMETHEUS_PORT
+          value: "9092"
+        resources:
+          {{- toYaml .Values.srsran.ue.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9092
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9092
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        volumeMounts:
+        - name: ue-config
+          mountPath: /etc/srsran
+        - name: logs
+          mountPath: /var/log/srsran
+      volumes:
+      - name: ue-config
+        configMap:
+          name: {{ include "openran.fullname" . }}-ue-config
+      - name: logs
+        emptyDir: {}
+      # Ensure UE starts after gNB
+      initContainers:
+      - name: wait-for-gnb
+        image: busybox:1.35
+        command: 
+        - 'sh'
+        - '-c'
+        - 'until nc -z {{ include "openran.fullname" . }}-gnb 9091; do echo "Waiting for gNB metrics endpoint..."; sleep 5; done; echo "gNB is ready"'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "openran.fullname" . }}-ue
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ue
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9092
+    targetPort: metrics
+    protocol: TCP
+    name: metrics
+  selector:
+    {{- include "openran.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ue
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openran.fullname" . }}-ue-config
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ue
+data:
+  ue.yml: |
+    # srsRAN UE configuration for OpenRAN lab
+    ue:
+      device_name: "OpenRAN-Lab-UE"
+      device_args: {{ .Values.srsran.ue.config.device_args }}
+      
+    rat:
+      eutra:
+        dl_earfcn: 3350  # Corresponds to gNB's 3.5 GHz band
+      nr:
+        bands: [78]
+        nof_carriers: 1
+        
+    rf:
+      driver: {{ .Values.srsran.ue.config.rf_driver }}
+      device_args: {{ .Values.srsran.ue.config.device_args }}
+      srate: 23.04e6
+      tx_gain: 50
+      rx_gain: 40
+      
+    # Network configuration
+    usim:
+      mode: "soft"
+      algo: "xor"
+      opc: "63BFA50EE6523365FF14C1F45F88737D"
+      k: "00112233445566778899aabbccddeeff"
+      imsi: "001010123456780"
+      imei: "353490069873319"
+      
+    nas:
+      apn: "srsapn"
+      user: "srsuser"
+      pass: "srspass"
+      
+    # RRC configuration for faster connection
+    rrc:
+      release: 15
+      ue_category: 9
+      
+    # Metrics and logging
+    metrics:
+      enable: true
+      addr: 0.0.0.0
+      port: 9092
+      
+    log:
+      level: info
+      hex_max_size: 64
+      all_level: warning
+      rrc_level: info
+      nas_level: info
+{{- end }}

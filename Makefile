@@ -29,7 +29,6 @@ kind-up:
 	@echo "📦 Loading Docker images..."
 	./hack/load-images.sh
 	@echo "🎯 Deploying OpenRAN stack..."
-	helm repo add local ./charts
 	helm dependency update charts/openran
 	helm install openran ./charts/openran -f charts/openran/values-kind.yaml
 	@echo "✅ Setup complete! Port-forward Grafana with:"

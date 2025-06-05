@@ -1,0 +1,124 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "OpenRAN Network Performance",
+    "tags": ["openran", "network", "performance"],
+    "style": "dark",
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-30m",
+      "to": "now"
+    },
+    "refresh": "5s",
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Network Throughput (Mbps)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "gnb_dl_throughput_mbps",
+            "legendFormat": "Downlink",
+            "refId": "A"
+          },
+          {
+            "expr": "gnb_ul_throughput_mbps",
+            "legendFormat": "Uplink",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "Mbps",
+            "min": 0
+          }
+        },
+        "gridPos": {"h": 9, "w": 24, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Connection Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "gnb_connected_ues_total",
+            "legendFormat": "Connected UEs",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 9}
+      },
+      {
+        "id": 3,
+        "title": "UE Signal Quality",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "ue_signal_strength_dbm",
+            "legendFormat": "Signal Strength",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "dBm",
+            "min": -120,
+            "max": -40,
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": -100},
+                {"color": "yellow", "value": -80},
+                {"color": "green", "value": -60}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 9}
+      },
+      {
+        "id": 4,
+        "title": "gNB Resource Usage",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "gnb_cpu_usage_percent",
+            "legendFormat": "CPU Usage",
+            "refId": "A"
+          },
+          {
+            "expr": "gnb_memory_usage_percent",
+            "legendFormat": "Memory Usage",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        },
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 9}
+      }
+    ]
+  }
+}

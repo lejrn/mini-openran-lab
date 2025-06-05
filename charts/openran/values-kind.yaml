@@ -1,0 +1,91 @@
+# Values for kind (local) deployment
+# Overrides for resource-constrained local environments
+
+# Global overrides for local deployment
+global:
+  imageRegistry: ""  # Use local images without registry prefix
+  imagePullPolicy: Never  # Never pull images, use local only
+
+# Resource limits adjusted for laptop deployment
+srsran:
+  gnb:
+    enabled: true
+    image:
+      repository: srsran-gnb
+      tag: "latest"
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+        
+  ue:
+    enabled: true
+    image:
+      repository: srsran-ue
+      tag: "latest"
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+
+ric:
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+xapps:
+  beamTuner:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "200m"
+        memory: "512Mi"
+
+# Reduced monitoring footprint for local
+prometheus:
+  server:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "512Mi"
+      limits:
+        cpu: "200m"
+        memory: "1Gi"
+    retention: "2d"
+
+grafana:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+
+# Enable all components for demo
+ric:
+  enabled: true
+  xappmgr:
+    enabled: true
+
+xapps:
+  beamTuner:
+    enabled: true
+
+prometheus:
+  enabled: true
+
+grafana:
+  enabled: true

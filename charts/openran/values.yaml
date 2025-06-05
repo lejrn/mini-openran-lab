@@ -1,0 +1,143 @@
+# Default values for openran chart.
+# This is a YAML-formatted file.
+
+# Global settings
+global:
+  imageRegistry: "ghcr.io/mini-openran-lab"
+  imagePullPolicy: IfNotPresent
+  storageClass: "standard"
+
+# srsRAN gNodeB configuration
+srsran:
+  gnb:
+    enabled: true
+    image:
+      repository: srsran/gnb
+      tag: "22.10"
+    resources:
+      requests:
+        cpu: "1000m"
+        memory: "2Gi"
+      limits:
+        cpu: "2000m"
+        memory: "4Gi"
+    config:
+      rf_driver: "zmq"
+      device_args: "tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,base_srate=23.04e6"
+      mcs: 16  # Modulation and Coding Scheme
+      channel_bandwidth_mhz: 20
+      
+  ue:
+    enabled: true
+    image:
+      repository: srsran/ue
+      tag: "22.10"
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+    config:
+      rf_driver: "zmq"
+      device_args: "tx_port=tcp://127.0.0.1:2001,rx_port=tcp://127.0.0.1:2000,base_srate=23.04e6"
+
+# O-RAN RIC Platform
+ric:
+  enabled: true
+  image:
+    repository: oransc/ric-platform
+    tag: "v2.4.0"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  
+  # xApp Manager
+  xappmgr:
+    enabled: true
+    image:
+      repository: oransc/xapp-manager
+      tag: "v1.0.0"
+
+# xApps
+xapps:
+  beamTuner:
+    enabled: true
+    image:
+      repository: "beam-tuner"
+      tag: "latest"
+    replicas: 1
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+    config:
+      logLevel: "INFO"
+      cqiThreshold: 7
+      adjustmentInterval: 30
+
+# Prometheus monitoring
+prometheus:
+  enabled: true
+  server:
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "1Gi"
+      limits:
+        cpu: "500m"
+        memory: "2Gi"
+    retention: "7d"
+  
+  # Scrape configs for OpenRAN components
+  serverFiles:
+    prometheus.yml:
+      scrape_configs:
+        - job_name: 'srsran-gnb'
+          static_configs:
+            - targets: ['srsran-gnb:9091']
+        - job_name: 'ric-platform'
+          static_configs:
+            - targets: ['ric-platform:9092']
+        - job_name: 'beam-tuner-xapp'
+          static_configs:
+            - targets: ['beam-tuner-xapp:8080']
+
+# Grafana dashboards
+grafana:
+  enabled: true
+  adminUser: admin
+  adminPassword: admin
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  
+  # Pre-configure data sources
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://openran-radio-prometheus-server:80
+          access: proxy
+          isDefault: true
+
+# Network policies and service mesh (future)
+networking:
+  networkPolicy:
+    enabled: false
+  serviceMesh:
+    enabled: false
