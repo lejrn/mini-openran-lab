@@ -92,23 +92,19 @@ kind create cluster --config $KIND_CONFIG_FILE --wait 5m
 echo "⏳ Waiting for cluster to be ready..."
 kubectl wait --for=condition=Ready nodes --all --timeout=300s
 
-echo "🎯 Installing Calico CNI..."
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/calico.yaml
-
-echo "⏳ Waiting for Calico to be ready..."
-kubectl wait --for=condition=Ready pods -l k8s-app=calico-node -n kube-system --timeout=300s
+echo "🎯 Cluster is using Kind's built-in CNI (skipping Calico for faster setup)..."
 
 echo "📦 Creating namespaces..."
-kubectl create namespace openran --dry-run=client -o yaml | kubectl apply -f -
-kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
-kubectl create namespace xapps --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace openran-radio --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace openran-monitoring --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace openran-xapps --dry-run=client -o yaml | kubectl apply -f -
 
 echo "🏷️  Labeling nodes for CPU pinning..."
 kubectl label nodes openran-control-plane openran.io/cpu-isolation=enabled --overwrite
 
 echo "🔍 Verifying cluster setup..."
 # Verify all namespaces exist
-for ns in openran monitoring xapps; do
+for ns in openran-radio openran-monitoring openran-xapps; do
     if kubectl get namespace $ns &> /dev/null; then
         echo "  ✅ Namespace '$ns' exists"
     else
@@ -126,6 +122,10 @@ else
 fi
 
 echo "✅ Kind cluster '$CLUSTER_NAME' is ready!"
+
+echo "📦 Loading Docker images..."
+$SCRIPT_DIR/load-images.sh
+
 echo "📋 Cluster info:"
 kubectl cluster-info --context kind-$CLUSTER_NAME
 echo ""
@@ -133,8 +133,7 @@ echo "📊 Cluster status:"
 kubectl get nodes -o wide
 echo ""
 echo "🔗 Next steps:"
-echo "  1. Run: ./hack/load-images.sh"
-echo "  2. Run: helm install openran ./charts/openran -f charts/openran/values-kind.yaml"
-echo "  3. Port-forward: kubectl port-forward svc/grafana 3000:3000 -n monitoring"
+echo "  1. Deploy: helm install openran-radio ./charts/openran -f charts/openran/values-kind.yaml -n openran-radio"
+echo "  2. Port-forward: kubectl port-forward svc/openran-grafana 3000:3000 -n openran-monitoring"
 echo ""
 echo "🧪 To run tests: pytest tests/test_kind_cluster.py -v"

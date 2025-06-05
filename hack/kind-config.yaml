@@ -12,14 +12,17 @@ nodes:
   extraPortMappings:
   - containerPort: 30000
     hostPort: 3000
+    listenAddress: 127.0.0.1
     protocol: TCP
     # Grafana dashboard access
   - containerPort: 30001  
     hostPort: 9090
+    listenAddress: 127.0.0.1
     protocol: TCP
     # Prometheus access
   - containerPort: 30002
     hostPort: 8080
+    listenAddress: 127.0.0.1
     protocol: TCP
     # xApp API access
   
