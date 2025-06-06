@@ -1,0 +1,15 @@
+{{- if .Values.podSecurity.enabled }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+    # Pod Security Standards
+    pod-security.kubernetes.io/enforce: {{ .Values.podSecurity.enforce | default "restricted" }}
+    pod-security.kubernetes.io/audit: {{ .Values.podSecurity.audit | default "restricted" }}
+    pod-security.kubernetes.io/warn: {{ .Values.podSecurity.warn | default "restricted" }}
+    # Network policy support
+    name: {{ .Release.Namespace }}
+{{- end }}

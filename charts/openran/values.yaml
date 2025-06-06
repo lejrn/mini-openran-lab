@@ -96,26 +96,46 @@ prometheus:
         cpu: "500m"
         memory: "2Gi"
     retention: "7d"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      fsGroup: 65534
   
   # Scrape configs for OpenRAN components
   serverFiles:
     prometheus.yml:
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+      
       scrape_configs:
+        - job_name: 'prometheus'
+          static_configs:
+            - targets: ['localhost:9090']
+        
         - job_name: 'srsran-gnb'
           static_configs:
-            - targets: ['srsran-gnb:9091']
-        - job_name: 'ric-platform'
+            - targets: ['{{ include "openran.fullname" . }}-gnb:9091']
+          metrics_path: '/metrics'
+          scrape_interval: 10s
+        
+        - job_name: 'srsran-ue'
           static_configs:
-            - targets: ['ric-platform:9092']
-        - job_name: 'beam-tuner-xapp'
-          static_configs:
-            - targets: ['beam-tuner-xapp:8080']
+            - targets: ['{{ include "openran.fullname" . }}-ue:9092']
+          metrics_path: '/metrics'
+          scrape_interval: 10s
 
 # Grafana dashboards
 grafana:
   enabled: true
   adminUser: admin
-  adminPassword: admin
+  # Use strong randomly generated password - will be created as secret
+  adminPassword: ""
+  # Generate random password if not provided
+  admin:
+    existingSecret: ""
+    userKey: admin-user
+    passwordKey: admin-password
   resources:
     requests:
       cpu: "200m"
@@ -135,9 +155,58 @@ grafana:
           access: proxy
           isDefault: true
 
-# Network policies and service mesh (future)
+# Network policies and service mesh
 networking:
   networkPolicy:
-    enabled: false
+    enabled: true
   serviceMesh:
     enabled: false
+
+# Resource quotas and limits
+resourceQuota:
+  enabled: true
+  pods: "10"
+  pvc: "4"
+  services: "5"
+  secrets: "10"
+  configmaps: "10"
+  requestsCpu: "4"
+  requestsMemory: "8Gi"
+  limitsCpu: "8"
+  limitsMemory: "16Gi"
+  requestsStorage: "20Gi"
+
+limitRange:
+  enabled: true
+  container:
+    defaultCpu: "500m"
+    defaultMemory: "512Mi"
+    defaultRequestCpu: "100m"
+    defaultRequestMemory: "128Mi"
+    maxCpu: "2"
+    maxMemory: "4Gi"
+    minCpu: "50m"
+    minMemory: "64Mi"
+  pod:
+    maxCpu: "4"
+    maxMemory: "8Gi"
+    minCpu: "100m"
+    minMemory: "128Mi"
+  pvc:
+    maxStorage: "10Gi"
+    minStorage: "1Gi"
+
+# Pod Security Standards
+podSecurity:
+  enabled: true
+  enforce: "restricted"
+  audit: "restricted"
+  warn: "restricted"
+
+# Image security policies
+imageSecurity:
+  enabled: false  # Requires admission controller setup
+  requireSignatures: false
+  maxCriticalVulns: 0
+  maxHighVulns: 2
+  failurePolicy: "Fail"

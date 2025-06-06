@@ -23,8 +23,25 @@ spec:
         prometheus.io/port: "9092"
         prometheus.io/path: "/metrics"
     spec:
+      serviceAccountName: {{ include "openran.fullname" . }}-ue
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: ue
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
         image: "{{- if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{- end }}{{ .Values.srsran.ue.image.repository }}:{{ .Values.srsran.ue.image.tag }}"
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}
         ports:
@@ -64,16 +81,29 @@ spec:
           mountPath: /etc/srsran
         - name: logs
           mountPath: /var/log/srsran
+        - name: tmp
+          mountPath: /tmp
       volumes:
       - name: ue-config
         configMap:
           name: {{ include "openran.fullname" . }}-ue-config
       - name: logs
         emptyDir: {}
+      - name: tmp
+        emptyDir: {}
       # Ensure UE starts after gNB
       initContainers:
       - name: wait-for-gnb
         image: busybox:1.35
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
         command: 
         - 'sh'
         - '-c'

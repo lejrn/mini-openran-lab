@@ -1,0 +1,57 @@
+{{- if .Values.imageSecurity.enabled }}
+---
+# ValidatingAdmissionWebhook for image security (requires admission controller)
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionWebhook
+metadata:
+  name: {{ include "openran.fullname" . }}-image-policy
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+webhooks:
+- name: image-security.openran.io
+  clientConfig:
+    service:
+      name: {{ include "openran.fullname" . }}-image-security
+      namespace: {{ .Release.Namespace }}
+      path: "/validate"
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: ["apps", ""]
+    apiVersions: ["v1"]
+    resources: ["pods", "deployments", "replicasets", "daemonsets", "statefulsets"]
+  admissionReviewVersions: ["v1", "v1beta1"]
+  sideEffects: None
+  failurePolicy: {{ .Values.imageSecurity.failurePolicy | default "Fail" }}
+{{- end }}
+---
+# ConfigMap with allowed image registries and security policies
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openran.fullname" . }}-image-policy
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+data:
+  policy.yaml: |
+    # Image security policy configuration
+    allowedRegistries:
+      - "ghcr.io/mini-openran-lab"
+      - "docker.io/library"  # For official base images only
+      - "quay.io/prometheus"
+      - "docker.io/grafana"
+    
+    # Require specific image tags (no latest)
+    disallowedTags:
+      - "latest"
+      - ""
+    
+    # Required image signature verification
+    requireSignatures: {{ .Values.imageSecurity.requireSignatures | default false }}
+    
+    # Maximum allowed vulnerabilities
+    maxCriticalVulns: {{ .Values.imageSecurity.maxCriticalVulns | default 0 }}
+    maxHighVulns: {{ .Values.imageSecurity.maxHighVulns | default 2 }}
+    
+    # Trusted signers (if signatures required)
+    trustedSigners:
+      - "openran-lab-key"

@@ -1,0 +1,65 @@
+{{- if .Values.resourceQuota.enabled }}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ include "openran.fullname" . }}-quota
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+spec:
+  hard:
+    # Pod limits
+    pods: {{ .Values.resourceQuota.pods | default "10" }}
+    persistentvolumeclaims: {{ .Values.resourceQuota.pvc | default "4" }}
+    services: {{ .Values.resourceQuota.services | default "5" }}
+    secrets: {{ .Values.resourceQuota.secrets | default "10" }}
+    configmaps: {{ .Values.resourceQuota.configmaps | default "10" }}
+    
+    # Resource limits
+    requests.cpu: {{ .Values.resourceQuota.requestsCpu | default "4" }}
+    requests.memory: {{ .Values.resourceQuota.requestsMemory | default "8Gi" }}
+    limits.cpu: {{ .Values.resourceQuota.limitsCpu | default "8" }}
+    limits.memory: {{ .Values.resourceQuota.limitsMemory | default "16Gi" }}
+    
+    # Storage limits
+    requests.storage: {{ .Values.resourceQuota.requestsStorage | default "20Gi" }}
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ include "openran.fullname" . }}-limits
+  labels:
+    {{- include "openran.labels" . | nindent 4 }}
+spec:
+  limits:
+  # Container limits
+  - type: Container
+    default:
+      cpu: {{ .Values.limitRange.container.defaultCpu | default "500m" }}
+      memory: {{ .Values.limitRange.container.defaultMemory | default "512Mi" }}
+    defaultRequest:
+      cpu: {{ .Values.limitRange.container.defaultRequestCpu | default "100m" }}
+      memory: {{ .Values.limitRange.container.defaultRequestMemory | default "128Mi" }}
+    max:
+      cpu: {{ .Values.limitRange.container.maxCpu | default "2" }}
+      memory: {{ .Values.limitRange.container.maxMemory | default "4Gi" }}
+    min:
+      cpu: {{ .Values.limitRange.container.minCpu | default "50m" }}
+      memory: {{ .Values.limitRange.container.minMemory | default "64Mi" }}
+  
+  # Pod limits
+  - type: Pod
+    max:
+      cpu: {{ .Values.limitRange.pod.maxCpu | default "4" }}
+      memory: {{ .Values.limitRange.pod.maxMemory | default "8Gi" }}
+    min:
+      cpu: {{ .Values.limitRange.pod.minCpu | default "100m" }}
+      memory: {{ .Values.limitRange.pod.minMemory | default "128Mi" }}
+  
+  # PVC limits
+  - type: PersistentVolumeClaim
+    max:
+      storage: {{ .Values.limitRange.pvc.maxStorage | default "10Gi" }}
+    min:
+      storage: {{ .Values.limitRange.pvc.minStorage | default "1Gi" }}
+{{- end }}

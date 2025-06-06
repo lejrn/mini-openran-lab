@@ -23,8 +23,25 @@ spec:
         prometheus.io/port: "9091"
         prometheus.io/path: "/metrics"
     spec:
+      serviceAccountName: {{ include "openran.fullname" . }}-gnb
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: gnb
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
         image: "{{- if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{- end }}{{ .Values.srsran.gnb.image.repository }}:{{ .Values.srsran.gnb.image.tag }}"
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}
         ports:
@@ -67,11 +84,15 @@ spec:
           mountPath: /etc/srsran
         - name: logs
           mountPath: /var/log/srsran
+        - name: tmp
+          mountPath: /tmp
       volumes:
       - name: gnb-config
         configMap:
           name: {{ include "openran.fullname" . }}-gnb-config
       - name: logs
+        emptyDir: {}
+      - name: tmp
         emptyDir: {}
       # CPU pinning for real-time performance (commented for now)
       # nodeSelector:
