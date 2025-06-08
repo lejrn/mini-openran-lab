@@ -2,11 +2,16 @@
 
 [![CI](https://github.com/username/mini-openran-lab/workflows/CI/badge.svg)](https://github.com/username/mini-openran-lab/actions)
 
-**A zero-cost, laptop-only "mini-OpenRAN lab" that demonstrates a full 4G/5G cell-site with O-RAN RIC, xApps,| **2. Radio pods** | Helm template for srsran-gnb | ✅ |
-| | Helm template for srsran-ue | ✅ |
-| | PyTest: log contains "RRC CONNECTED" | ✅ |
-| | Namespace separation implementation | ✅ |
-| | Security audit and documentation | ✅ |d modern DevOps—all inside WSL 2.**
+**A zero-cost, laptop-only "mini-OpenRAN lab" that demonstrates a full 4G/5G cell-site with O-RAN RIC, xApps, and modern DevOps—all inside WSL 2.**
+
+> **🎯 Learn both telecom engineering (4G/5G protocols) and modern DevOps (Kubernetes, monitoring, CI/CD) in one integrated project!**
+
+## 📋 **What You'll Build**
+
+- **📡 Radio Access Network**: srsRAN gNB + UE with software-defined radio
+- **🧠 Intelligence Layer**: O-RAN RIC + xApps making real-time network decisions  
+- **📊 Observability Stack**: Prometheus + Grafana monitoring the entire network
+- **🚀 DevOps Pipeline**: Everything containerized, tested, and deployed with Helm
 
 ## 🚀 Quick Start (WSL 2)
 
@@ -43,16 +48,16 @@ poetry run pytest -q && robot robot/e2e.robot
 
 ## 📚 Understanding the Stack
 
-### 🎯 **What We're Building**
+### 🎯 **Project Overview**
 
-We're implementing **Phase 2 (Radio Pods)** of the Mini-OpenRAN Lab project, creating a **complete cellular network simulation** that includes:
+The Mini-OpenRAN Lab implements a **complete cellular network simulation** in Kubernetes, covering:
 
-- **Radio Access Network (RAN)**: gNB + UE communicating via software radio
-- **Intelligence Layer**: RIC + xApps making smart decisions
-- **Observability Stack**: Prometheus + Grafana showing what's happening
-- **DevOps Pipeline**: Everything packaged with Helm, tested with PyTest
+- **📡 Radio Access Network (RAN)**: gNB + UE communicating via software radio
+- **🧠 Intelligence Layer**: RIC + xApps making smart decisions
+- **📊 Observability Stack**: Prometheus + Grafana showing what's happening
+- **🚀 DevOps Pipeline**: Everything packaged with Helm, tested with PyTest
 
-This teaches you both **telecom engineering** (4G/5G protocols) and **modern DevOps** (Kubernetes, monitoring, CI/CD) - a powerful combination!
+**Perfect for learning both telecom engineering (4G/5G protocols) and modern DevOps (Kubernetes, monitoring, CI/CD)!**
 
 ### 📦 **What is a "Chart" (Helm Chart)**
 
